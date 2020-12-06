@@ -1,10 +1,16 @@
 /**
+ *
+ * Version 1.2021.0 (Ready for another year)
+ *
  * GLOBAL constants for U3A
  * Change these to match the column names you are using for email
  * recepient addresses and email sent column.
  */
 var U3A = {
-  WORDPRESS_PROGRAM_FILE_ID: '1svCAoJKW7FsnerJSPhLkzuXEcicdksA5fcV2UfaztR8', // file is - "U3A Current Program - Wordpress"
+  // file is - "U3A Current Program - Wordpress"
+  WORDPRESS_PROGRAM_FILE_ID: '1svCAoJKW7FsnerJSPhLkzuXEcicdksA5fcV2UfaztR8',
+  // file is - "U3A Enrolment Form"
+  ENROLMENT_GOOGLE_FORM_ID: '1ALDrXrF5t9BLidEoIXSmqHM79iTRERUB4guQxO2jBko',
 }
 
 /**
@@ -36,6 +42,7 @@ function onOpen() {
       ui
         .createMenu('Wordpress Actions')
         .addItem('Create Course Program', 'makeCourseDetailForWordPress')
+        .addItem('Create Enrolment Form', 'updateWordpressEnrolmentForm')
         .addItem('Import Enrolment CSV', 'loadCSVSidebar')
     )
     .addSeparator()

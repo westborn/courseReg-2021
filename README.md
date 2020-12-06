@@ -52,3 +52,7 @@ e-mail: george@westborn.com.au
 - v1.0.0 (June, 2020)
 
   Initial release.
+
+- v1.2021.0 (December, 2020)
+
+  Re-factor and update for 2021 classes.

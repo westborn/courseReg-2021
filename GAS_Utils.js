@@ -285,12 +285,14 @@ function fmtDateTimeLocal(
  * return ddd, dd-mmm-yyyy
  *
  * @param {Date Object} date
- * @returns {string} formatted date
+ * @returns {number} date Timestamp
  */
-function getLastFridayOf(date) {
+function getPreviousFridayTimestamp(date) {
   var d = new Date(date),
     day = d.getDay(),
-    diff = day <= 5 ? 7 - 5 + day : day - 5
+    // if day  sun-thu then go back 1 week + that many days
+    // else if Fri-Sat go back
+    diff = day <= 5 ? 14 - 5 + day : 7 - 5 + day
 
   d.setDate(d.getDate() - diff)
   d.setHours(0)

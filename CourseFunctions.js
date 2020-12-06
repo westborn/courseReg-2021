@@ -10,9 +10,11 @@ function buildDB() {
   const ssFolder = DriveApp.getFolderById(ssId).getParents().next()
   //  showToast("Id: " + ssId + "  Name: " + ssName + "  Folder: " + ssFolder.getName());
 
-  const fromSheet = ss.getSheetByName('RegistrationMaster')
-  const fromData = fromSheet.getDataRange().getValues()
-  const headers = fromData.shift()
+  const [headers, ...fromData] = ss
+    .getSheetByName('RegistrationMaster')
+    .getDataRange()
+    .getDisplayValues()
+
   //drop name, email, and count columns to get CourseNames ONLY
   courseNames = headers.slice(2, headers.length - 1)
   //loop thru rows
@@ -237,11 +239,14 @@ function courseDetailToSheet(course, outputTo) {
     .setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP)
     .setVerticalAlignment('middle')
 
-  // Calculate friday prior to course start date.
+  // Calculate 2 friday's prior to course start date.
+
+  const prevFridayTimestamp = getPreviousFridayTimestamp(course.startDate)
+  const twoWeeksAgoFriday = prevFridayTimestamp.setDate(prevFridayTimestamp.getDate() - 7)
 
   cell =
     'Enrollments close - ' +
-    fmtDateTimeLocal(getLastFridayOf(course.startDate), {
+    fmtDateTimeLocal(twoWeeksAgoFriday, {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
@@ -497,7 +502,7 @@ function createCourseDetails() {
     return acc
   }, {})
 
-  // Search for a string and return  the next word
+  // Search for a string and return the next word
   let getWordAfter = (str, searchText) => {
     const re = new RegExp(`${searchText}\\s(\\S+)`, 'i')
     const found = str.match(re)
@@ -562,4 +567,53 @@ function createCourseDetails() {
     .setValues(tr)
 
   return
+}
+
+/**
+ * Update existing Google Form with details of all courses in "CourseDetails" sheet
+ *
+ */
+function updateWordpressEnrolmentForm() {
+  // find the existing Google Form
+  const googleForm = FormApp.openById(U3A.ENROLMENT_GOOGLE_FORM_ID)
+
+  // delete all existing CheckBox Questions ready to add all courses
+  var items = googleForm.getItems()
+  items.forEach((item) => {
+    if (item.getType() == 'CHECKBOX') {
+      // console.log('Deleting... ', item.getTitle())
+      googleForm.deleteItem(item)
+    }
+  })
+
+  //get courseDetail sheet
+  const courseData = SpreadsheetApp.getActiveSpreadsheet()
+    .getSheetByName('CourseDetails')
+    .getDataRange()
+    .getValues()
+  const allCourses = getJsonArrayFromData(courseData)
+
+  // add each course to the form
+  /**
+   * TODO
+   * what other text needs to be in the helptext?
+   *
+   */
+  allCourses.forEach((thisCourse) => {
+    const courseDateTime = formatU3ADateTime(new Date(thisCourse.startDate))
+    const courseHelpText = `Session starts: ${courseDateTime}  -  Presented by: ${thisCourse.presenter}`
+    showToast(`Adding Question: ${thisCourse.title}`, 1)
+    const item = googleForm.addCheckboxItem()
+    item.setTitle(thisCourse.title).setChoices([item.createChoice('Enrol?')])
+    item.setHelpText(courseHelpText)
+  })
+
+  // Disconnect the form from its spreadsheet
+  // remove all existing responses from the form
+  // re-attach the spreadsheet to the form
+  //  NOTE: the process automagically creates a new sheet in the spreadsheet.
+  const responseSheetId = googleForm.getDestinationId()
+  googleForm.removeDestination()
+  googleForm.deleteAllResponses()
+  googleForm.setDestination(FormApp.DestinationType.SPREADSHEET, responseSheetId)
 }
