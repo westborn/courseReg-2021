@@ -574,8 +574,17 @@ function createCourseDetails() {
  *
  */
 function updateWordpressEnrolmentForm() {
-  // find the existing Google Form
+  //find the existing Google Form
   const googleForm = FormApp.openById(U3A.ENROLMENT_GOOGLE_FORM_ID)
+  // const googleForm = FormApp.openById('1oTkGQNzNHn3cDKkU5ez0_c1vM4Y4zr1GS4CUHgzUGDE')
+
+  // get the response spreadsheet ID, folder and filename
+  const responseSpreadsheetId = googleForm.getDestinationId()
+  const responseFolder = DriveApp.getFileById(responseSpreadsheetId).getParents().next()
+  const responseFilename = DriveApp.getFileById(responseSpreadsheetId).getName()
+
+  // Disconnect the response spreadsheet from its form
+  googleForm.removeDestination()
 
   // delete all existing CheckBox Questions ready to add all courses
   var items = googleForm.getItems()
@@ -608,12 +617,131 @@ function updateWordpressEnrolmentForm() {
     item.setHelpText(courseHelpText)
   })
 
-  // Disconnect the form from its spreadsheet
+  //make a new filename with todays date/time
+  const newResponseFilename = `${responseFilename} (Archive - ${formatU3ADateTime(Date.now())})`
+  //copy the existing response sheet to an archive copy
+  DriveApp.getFileById(responseSpreadsheetId).makeCopy(newResponseFilename, responseFolder)
+
   // remove all existing responses from the form
-  // re-attach the spreadsheet to the form
-  //  NOTE: the process automagically creates a new sheet in the spreadsheet.
-  const responseSheetId = googleForm.getDestinationId()
-  googleForm.removeDestination()
   googleForm.deleteAllResponses()
-  googleForm.setDestination(FormApp.DestinationType.SPREADSHEET, responseSheetId)
+
+  //set up existing sheet to take responses again
+  googleForm.setDestination(FormApp.DestinationType.SPREADSHEET, responseSpreadsheetId)
+}
+
+/**
+ * Take the contents of a form's responses and write the transformed values to the "CSV" sheet
+ *
+ */
+function enrolResponseToCSV(responseSheet) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const sheet = ss.getSheetByName('CSV')
+
+  //get courseDetail sheet
+  const courseData = ss.getSheetByName('CourseDetails').getDataRange().getValues()
+  const allCourses = getJsonArrayFromData(courseData)
+  //get just the title from  the Course Details sheet and sort alphabetically
+  const courseTitles = allCourses.map((course) => course.title).sort()
+  const numberOfCourses = courseTitles.length
+
+  //get the response data from spreadsheet attached to the enrolment form
+  const responseData = responseSheet.getDataRange().getValues()
+  const allResponses = getJsonArrayFromData(responseData)
+
+  //reduce the Form Response data to an array of ["name", "email", [course titles enroled in]]
+  const registrationItems = allResponses.reduce((acc, resp) => {
+    //get the column name keys from the response line
+    const cols = Object.keys(resp)
+    // ignore column names that aren't course titles
+    // include columns that have enrol? checked
+    const courses = cols.filter((col) => {
+      if (!col.match(/^(Timestamp|Name|Email Address)$/) && resp[col] === 'Enrol?') {
+        return true
+      }
+    })
+    //if there are any courses add them to our result
+    if (courses) {
+      acc.push([resp['Name'], resp['Email Address'], courses])
+    }
+    return acc
+  }, [])
+
+  // clear the CSV sheet and write the headings
+  sheet.clear()
+  sheet.appendRow(['name', 'email', ...courseTitles, 'nameCheck', 'emailCheck'])
+
+  //format course columns with diagonal headings and narrow width
+  sheet.setColumnWidth(1, 150)
+  sheet.setColumnWidth(2, 150)
+  courseTitles.forEach((_course, idx) => {
+    sheet.setColumnWidth(idx + 3, 100)
+    sheet.getRange(1, idx + 3).setTextRotation(60)
+  })
+  sheet.setColumnWidth(numberOfCourses + 3, 120)
+  sheet.setColumnWidth(numberOfCourses + 4, 120)
+
+  //loop thru form response rows
+  //  then thru array of courses in the response
+  //    output name, email, [each course]
+  result = []
+  registrationItems.forEach(([name, email, courses]) => {
+    const thisRow = Array(numberOfCourses).fill('')
+    courses.forEach((course) => {
+      // get the column index of the enroled course
+      enroledIndex = courseTitles.indexOf(course)
+      if (enroledIndex > -1) {
+        thisRow[enroledIndex] = '1'
+      }
+    })
+    result.push([name.trim(), email.trim(), ...thisRow])
+  })
+
+  //Write the data back to the sheet
+  sheet.getRange(sheet.getLastRow() + 1, 1, result.length, result[0].length).setValues(result)
+
+  //set a formula in the last 2 columns as error checking
+  const formulas = [
+    'ArrayFormula(index(Members,match(TRUE, exact(A2,memberName),0),1))',
+    'ArrayFormula(index(Members,match(TRUE, exact(B2,memberEmail),0),1))',
+  ]
+  sheet.getRange(2, numberOfCourses + 3, 1, 2).setFormulas([formulas])
+  const fillDownRange = sheet.getRange(2, numberOfCourses + 3, sheet.getLastRow() - 1)
+  sheet.getRange(2, numberOfCourses + 3, 1, 2).copyTo(fillDownRange)
+}
+
+/**
+ * Look for a Google Form in the current folder
+ * > 1 form file - ask user
+ * no form files - throw error
+ *
+ * get the current response sheet
+ * pass it to the function that decodes it and writes to 'CSV' sheet
+ */
+function makeEnrolmentCSV() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const ssFolder = getMyFolder(ss)
+  const ssFolderName = ssFolder.getName()
+  let formFileArray
+  formFileArray = findFilesInFolder(ssFolder, "mimeType = 'application/vnd.google-apps.form'")
+
+  if (formFileArray.length === 0) {
+    throw new Error(`Can't find a Google Form in the "${ssFolderName}" folder`)
+  }
+
+  if (formFileArray.length > 1) {
+    const formFileName = promptForFormName()
+    if (formFileName) {
+      const searchFor = `mimeType = 'application/vnd.google-apps.form' and title contains '${formFileName}'`
+      formFileArray = findFilesInFolder(ssFolder, searchFor)
+      if (formFileArray.length != 1) {
+        throw new Error(`Can't find a Form '${formFileName}' in the "${ssFolderName}" folder`)
+      }
+    }
+  }
+  const formFileId = formFileArray[0].getId()
+  const googleForm = FormApp.openById(formFileId)
+  const formResponseSheet = getFormDestinationSheet(googleForm)
+
+  enrolResponseToCSV(formResponseSheet)
+  return
 }

@@ -1,3 +1,96 @@
+function getFormDestinationSheet(form) {
+  const form_id = form.getId()
+  try {
+    const destination_id = form.getDestinationId()
+    if (destination_id) {
+      const spreadsheet = SpreadsheetApp.openById(destination_id)
+      const matches = spreadsheet.getSheets().filter(function (sheet) {
+        const url = sheet.getFormUrl()
+        return url && url.indexOf(form_id) > -1
+      })
+      return matches.length > 0 ? matches[0] : null
+    }
+    return null
+  } catch (error) {
+    return null
+  }
+}
+
+// https://developers.google.com/drive/api/v2/ref-search-terms
+function findFilesInFolder(folderID, searchExpression) {
+  const files = folderID.searchFiles(searchExpression)
+  const res = []
+  while (files.hasNext()) {
+    res.push(files.next())
+  }
+  return res
+}
+
+/*
+  get full path & file name from file id
+*/
+function getFileName(id) {
+  var file = DriveApp.getFileById(id)
+  var fileName = file.getName()
+  var strFolders = getFolders(file)
+  return strFolders + '/' + fileName
+}
+
+function getFolders(object) {
+  var folders = object.getParents()
+  if (!folders.hasNext()) {
+    return 'My Drive'
+  }
+  var folder = folders.next()
+
+  var folderNames = []
+
+  while (folder.getParents().hasNext()) {
+    var folderName = folder.getName()
+    folderNames.unshift(folderName)
+    folder = folder.getParents().next()
+  }
+
+  return folderNames.join('/')
+}
+
+/* copySheet
+  * make copy of sheet and mave it after current sheet
+
+  * SS           SpreadSheet
+  * strToCopy    Name of sheet to copy
+  * strName      Name of new sheet
+*/
+function copySheet(SS, strToCopy, strName) {
+  var SS = SS || SpreadsheetApp.getActiveSpreadsheet()
+  var sheet = SS.getSheetByName(strToCopy)
+  var newSheet = sheet.copyTo(SS)
+  newSheet.setName(strName)
+  var index = sheet.getIndex() + 1
+  SS.setActiveSheet(newSheet)
+  SS.moveActiveSheet(index)
+}
+
+/*
+  Creates sheet if it does not exist
+  Returns sheet object
+
+  * ss           SpreadSheet                 default: current sheet
+  * name         Name of sheet
+*/
+function createSheetIfNotExists(ss, name) {
+  var ss = ss || SpreadsheetApp.getActiveSpreadsheet()
+
+  try {
+    ss.setActiveSheet(ss.getSheetByName(name))
+  } catch (e) {
+    ss.insertSheet(name)
+  }
+
+  var sheet = ss.getSheetByName(name)
+  return sheet
+}
+
 function getMyFolder(sheetObj) {
   return DriveApp.getFileById(sheetObj.getId()).getParents().next()
 }

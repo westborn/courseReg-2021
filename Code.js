@@ -43,7 +43,8 @@ function onOpen() {
         .createMenu('Wordpress Actions')
         .addItem('Create Course Program', 'makeCourseDetailForWordPress')
         .addItem('Create Enrolment Form', 'updateWordpressEnrolmentForm')
-        .addItem('Import Enrolment CSV', 'loadCSVSidebar')
+        .addItem('Import Enrolment Responses', 'makeEnrolmentCSV')
+      // .addItem('Import Enrolment CSV', 'loadCSVSidebar')
     )
     .addSeparator()
     .addSubMenu(
