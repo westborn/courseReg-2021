@@ -48,7 +48,6 @@ function onOpen() {
         .addItem('Create Course Program', 'makeCourseDetailForWordPress')
         .addItem('Create Enrolment Form', 'updateWordpressEnrolmentForm')
         .addItem('Import Enrolment Responses', 'makeEnrolmentCSV')
-      // .addItem('Import Enrolment CSV', 'loadCSVSidebar')
     )
     .addSeparator()
     .addSubMenu(
@@ -75,14 +74,6 @@ function loadHelpSidebar() {
   SpreadsheetApp.getUi().showSidebar(html)
 }
 
-/**
- * Handler  to load CSV Uploader Sidebar.
- */
-function loadCSVSidebar() {
-  var html = HtmlService.createHtmlOutputFromFile('uploadCSV').setTitle('CSV Upload')
-  SpreadsheetApp.getUi().showSidebar(html)
-}
-
 function btn_makeHyperlink() {
   makeHyperlink()
 }
@@ -97,70 +88,4 @@ function btn_createDraftZoomEmail() {
 
 function btn_print_courseRegister() {
   print_courseRegister()
-}
-
-/**
- * Take the contents of a CSV file and write the transformed values to the "CSV" sheet
- *
- */
-function appendCSV(csvData, writeMode) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet()
-  const sheet = ss.getSheetByName('CSV')
-
-  //get courseDetail sheet
-  const courseData = ss.getSheetByName('CourseDetails').getDataRange().getValues()
-  const allCourses = getJsonArrayFromData(courseData)
-  //get just the header tags from  the Course Details sheet
-  headers = allCourses.map((course) => course.tag)
-
-  //turn the CSV into objects
-  const csvArray = getJsonArrayFromData(csvData)
-
-  //sort headers alphabetic to create correct column sequence
-  const courseSequence = headers.sort()
-  let result = []
-
-  //if we're deleting all existing, add the headings back
-  //clear the sheet we are going to download to
-  if (writeMode === 'create') {
-    result = [['name', 'email', ...courseSequence]]
-    sheet.insertRowBefore(1)
-    const lastRow = sheet.getLastRow()
-    if (lastRow > 1) {
-      sheet.deleteRows(2, lastRow - 1)
-    }
-  }
-
-  //loop thru CSV rows (use all entries for "create" else use "unread" entries)
-  //  then thru columns of courses
-  //    output name, email, [each course]
-  csvArray.map((entry) => {
-    if (writeMode === 'create' || (writeMode === 'append' && entry.Status === 'unread')) {
-      const thisRow = courseSequence.map((col) => {
-        return entry[col] ? '1' : ''
-      })
-      result.push([entry.Name.trim(), entry.Email.trim(), ...thisRow])
-    }
-  })
-
-  //Write the data back to the sheet
-  sheet.getRange(sheet.getLastRow() + 1, 1, result.length, result[0].length).setValues(result)
-
-  //set a formula in the last 2 columns as error checking
-  sheet.getRange(1, courseSequence.length + 3, 1, 2).setValues([['nameCheck', 'emailCheck']])
-  const formulas = [
-    'ArrayFormula(index(Members,match(TRUE, exact(A2,memberName),0),1))',
-    'ArrayFormula(index(Members,match(TRUE, exact(B2,memberEmail),0),1))',
-  ]
-  sheet.getRange(2, courseSequence.length + 3, 1, 2).setFormulas([formulas])
-  const fillDownRange = sheet.getRange(2, courseSequence.length + 3, sheet.getLastRow() - 1)
-  sheet.getRange(2, courseSequence.length + 3, 1, 2).copyTo(fillDownRange)
-}
-
-function readCSV(data, writeMode) {
-  var csvFile = Utilities.newBlob(data.bytes, data.mimeType, data.filename)
-  const csvData = Utilities.parseCsv(csvFile.getDataAsString(), ',')
-
-  appendCSV(csvData, writeMode)
-  return
 }

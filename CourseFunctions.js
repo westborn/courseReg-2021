@@ -567,6 +567,7 @@ function updateWordpressEnrolmentForm() {
 /**
  * Take the contents of a form's responses and write the transformed values to the "CSV" sheet
  *
+ * @param {sheet Object} responseSheet from the spreadsheet attached to the form
  */
 function enrolResponseToCSV(responseSheet) {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
