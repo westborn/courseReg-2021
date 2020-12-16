@@ -1,69 +1,4 @@
 /**
- * Get data from the "RegistrationMaster" and populate the "Database"
- * For all the columns that have a 1 - write the details to the database columns
- * Recalculate the 2 pivot tables after the database is written back to the sheet
- */
-function buildDB() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet()
-  const ssId = ss.getId()
-  const ssName = ss.getName()
-  const ssFolder = DriveApp.getFolderById(ssId).getParents().next()
-  //  showToast("Id: " + ssId + "  Name: " + ssName + "  Folder: " + ssFolder.getName());
-
-  const [headers, ...fromData] = ss
-    .getSheetByName('RegistrationMaster')
-    .getDataRange()
-    .getDisplayValues()
-
-  //drop name, email, and count columns to get CourseNames ONLY
-  courseNames = headers.slice(2, headers.length - 1)
-  //loop thru rows
-  //  then thru columns of courses
-  //    select those with a 1
-  //    output name and course
-  const result = fromData.reduce((res, row) => {
-    const courseCols = row.slice(2, row.length - 1)
-    const tmp = courseCols.reduce((acc, col, idx) => {
-      if (col === 1) {
-        return acc.concat([[row[0], courseNames[idx]]])
-      }
-      return acc
-    }, [])
-    if (tmp.length) {
-      return res.concat(tmp)
-    }
-    return res
-  }, [])
-
-  //clear 2 Database columns of ALL data
-  dbSheet = ss.getSheetByName('Database')
-  dbSheet.getRange('B13:C').clear()
-  // write the 2 columns to the sheet - starting at "B13"
-  dbSheet.getRange(13, 2, result.length, 2).setValues(result)
-
-  //Now create the 2 pivot tables (E12 and H12) from the Database
-
-  const sourceRange = 'B12:C' + (result.length + 12).toString()
-  const sourceData = dbSheet.getRange(sourceRange)
-
-  const pivotTable1 = dbSheet.getRange('E12').createPivotTable(sourceData)
-  const pivotValue1 = pivotTable1.addPivotValue(
-    2,
-    SpreadsheetApp.PivotTableSummarizeFunction.COUNTA
-  )
-  pivotValue1.setDisplayName('numberCourses')
-  const pivotGroup1 = pivotTable1.addRowGroup(2)
-
-  const pivotTable2 = dbSheet.getRange('H12').createPivotTable(sourceData)
-  const pivotValue2 = pivotTable2.addPivotValue(
-    3,
-    SpreadsheetApp.PivotTableSummarizeFunction.COUNTA
-  )
-  pivotValue2.setDisplayName('numberAttendees')
-  const pivotGroup2 = pivotTable2.addRowGroup(3)
-}
-
-/**
  * Get the attendees from the sheet and populate a hyperlink with mailto: bcc items
  * 2 Hyperlinks are coonstructed 1 for Outlook (with ; delimiter) and one for Mac (with , delimiter)
  */
@@ -744,4 +679,62 @@ function makeEnrolmentCSV() {
 
   enrolResponseToCSV(formResponseSheet)
   return
+}
+
+/**
+ * Get data from the "CSV" and populate the "Database"
+ * For all the columns that have a 1 - write the details to the database columns
+ * Recalculate the 2 pivot tables after the database is written back to the sheet
+ */
+function buildDB() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+
+  //get RegistrationMaster sheet
+  const registrationData = ss.getSheetByName('RegistrationMaster').getDataRange().getValues()
+  const allRegistrations = getJsonArrayFromData(registrationData)
+
+  //reduce the registration data to an array of ["name", courseTitle"]
+  const dbItems = allRegistrations.reduce((acc, resp) => {
+    //get the column name keys from the response line
+    const cols = Object.keys(resp)
+    // ignore column names that aren't course titles
+    // include columns that have "1" in the column
+    const courses = cols.filter((col) => {
+      if (!col.match(/^(name|email|count)$/) && resp[col] != '') {
+        return true
+      }
+    })
+    //if there are any courses add them to our database
+    courses.map((course) => {
+      acc.push([resp['name'], course])
+    })
+    return acc
+  }, [])
+
+  //clear 2 Database columns of ALL data
+  dbSheet = ss.getSheetByName('Database')
+  dbSheet.getRange('B13:C').clear()
+  // write the 2 columns to the sheet - starting at "B13"
+  dbSheet.getRange(13, 2, dbItems.length, 2).setValues(dbItems)
+
+  //Now create the 2 pivot tables (E12 and H12) from the Database
+
+  const sourceRange = 'B12:C' + (dbItems.length + 12).toString()
+  const sourceData = dbSheet.getRange(sourceRange)
+
+  const pivotTable1 = dbSheet.getRange('E12').createPivotTable(sourceData)
+  const pivotValue1 = pivotTable1.addPivotValue(
+    2,
+    SpreadsheetApp.PivotTableSummarizeFunction.COUNTA
+  )
+  pivotValue1.setDisplayName('numberCourses')
+  const pivotGroup1 = pivotTable1.addRowGroup(2)
+
+  const pivotTable2 = dbSheet.getRange('H12').createPivotTable(sourceData)
+  const pivotValue2 = pivotTable2.addPivotValue(
+    3,
+    SpreadsheetApp.PivotTableSummarizeFunction.COUNTA
+  )
+  pivotValue2.setDisplayName('numberAttendees')
+  const pivotGroup2 = pivotTable2.addRowGroup(3)
 }
