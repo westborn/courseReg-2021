@@ -176,11 +176,11 @@ function courseDetailToSheet(course, outputTo) {
 
   // Calculate 2 friday's prior to course start date.
 
-  const prevFridayTimestamp = getPreviousFridayTimestamp(course.startDate)
-  const twoWeeksAgoFriday = prevFridayTimestamp.setDate(prevFridayTimestamp.getDate() - 7)
+  const prevFridayDate = new Date(getPreviousFridayTimestamp(course.startDate))
+  const twoWeeksAgoFriday = prevFridayDate.setDate(prevFridayDate.getDay() - 7)
 
   cell =
-    'Enrollments close - ' +
+    'Enrolments close - ' +
     fmtDateTimeLocal(twoWeeksAgoFriday, {
       weekday: 'short',
       month: 'short',

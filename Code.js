@@ -8,8 +8,12 @@
  */
 var U3A = {
   // file is - "U3A Current Program - Wordpress"
-  WORDPRESS_PROGRAM_FILE_ID: '1svCAoJKW7FsnerJSPhLkzuXEcicdksA5fcV2UfaztR8',
-  // file is - "U3A Enrolment Form"
+  // WORDPRESS_PROGRAM_FILE_ID: '1svCAoJKW7FsnerJSPhLkzuXEcicdksA5fcV2UfaztR8',
+
+  // file is - "U3A Current Program - Wordpress"
+  WORDPRESS_PROGRAM_FILE_ID: '1BIsccb20dsKWSVB_jy7EKGmCV25yQzdbGn3K99tv6A0',
+
+  // file is - "Term-1 Enrolments"
   ENROLMENT_GOOGLE_FORM_ID: '1ALDrXrF5t9BLidEoIXSmqHM79iTRERUB4guQxO2jBko',
 }
 
