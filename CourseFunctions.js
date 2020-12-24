@@ -177,7 +177,7 @@ function courseDetailToSheet(course, outputTo) {
   // Calculate 2 friday's prior to course start date.
 
   const prevFridayDate = new Date(getPreviousFridayTimestamp(course.startDate))
-  const twoWeeksAgoFriday = prevFridayDate.setDate(prevFridayDate.getDay() - 7)
+  const twoWeeksAgoFriday = new Date(prevFridayDate.setDate(prevFridayDate.getDate() - 7))
 
   cell =
     'Enrolments close - ' +
@@ -444,20 +444,29 @@ function createCourseDetails() {
     return found && found.index ? found[1] : ''
   }
 
-  const rows = Object.values(courses).map((index, tagIndex) => {
+  const rows = Object.values(courses).map((index) => {
     // Title
     const searchForTitle = sortedSessions[index].summary.match(/with(?!.*with)/i)
     let title = ''
     if (searchForTitle && searchForTitle.index) {
       title = sortedSessions[index].summary.slice(0, searchForTitle.index).trim()
     }
+    // Dates
+    const startDateTime = new Date(sortedSessions[index].startDateTime)
+    const startDate = googleSheetDateTime(startDateTime)
+
+    const endDateTime = new Date(sortedSessions[index].endDateTime)
+
+    const prevFridayDate = new Date(getPreviousFridayTimestamp(startDateTime))
+    const closeDate = new Date(prevFridayDate.setDate(prevFridayDate.getDate() - 7))
+
     // Times
-    const displayStartTime = fmtDateTimeLocal(new Date(sortedSessions[index].startDateTime), {
+    const displayStartTime = fmtDateTimeLocal(startDateTime, {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
     })
-    const displayEndTime = fmtDateTimeLocal(new Date(sortedSessions[index].endDateTime), {
+    const displayEndTime = fmtDateTimeLocal(endDateTime, {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
@@ -474,7 +483,8 @@ function createCourseDetails() {
     return {
       summary: sortedSessions[index].summary,
       title,
-      startDate: googleSheetDateTime(sortedSessions[index].startDateTime),
+      startDate,
+      closeDate,
       presenter: sortedSessions[index].presenter,
       days: sortedSessions[index].daysScheduled,
       dates: sortedSessions[index].datesScheduled,
@@ -487,7 +497,6 @@ function createCourseDetails() {
       phone: member.mobile || '',
       email: member.email || '',
       contact: sortedSessions[index].contact || 'No Contact',
-      tag: String.fromCharCode(tagIndex + 65) + (tagIndex + 1),
     }
   })
 

@@ -375,7 +375,6 @@ function fmtDateTimeLocal(
 
 /**
  * find the date for the friday prior to date passed in
- * return ddd, dd-mmm-yyyy
  *
  * @param {Date Object} date
  * @returns {number} date Timestamp
@@ -385,12 +384,12 @@ function getPreviousFridayTimestamp(date) {
     day = d.getDay(),
     // if day  sun-thu then go back 1 week + that many days
     // else if Fri-Sat go back
-    diff = day <= 5 ? 14 - 5 + day : 7 - 5 + day
+    diff = day <= 5 ? 7 - 5 + day : day - 5
 
   d.setDate(d.getDate() - diff)
-  d.setHours(0)
-  d.setMinutes(0)
-  d.setSeconds(0)
+  d.setHours(23)
+  d.setMinutes(59)
+  d.setSeconds(59)
 
   return d.getTime()
 }
