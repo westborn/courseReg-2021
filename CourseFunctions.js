@@ -352,7 +352,7 @@ function createZoomSessionEmail(templateEmailSubject = 'TEMPLATE - Zoom Session 
  * Formats a date to a "standard" for U3A correspondence
  * "ddd d-mmm h:mm AM"
  * @param {date} dte
- * @returns {string} formatted date string
+ * @returns {string} formatted date and time string
  */
 function formatU3ADateTime(dte) {
   const config = {
@@ -386,6 +386,37 @@ function formatU3ADateTime(dte) {
   ] = dateTimeFormat.formatToParts(new Date(dte))
 
   return `${weekday} ${day}-${month} ${hour}:${minute}${dayperiod}`
+}
+
+/**
+ * Formats a date to a "standard" for U3A correspondence
+ * "ddd d-mmm"
+ * @param {date} dte
+ * @returns {string} formatted date string
+ */
+function formatU3ADate(dte) {
+  const config = {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+  }
+  const dateTimeFormat = new Intl.DateTimeFormat('en-AU', config)
+
+  const [
+    { value: weekday },
+    ,
+    { value: day },
+    ,
+    { value: month },
+    ,
+    { value: year },
+    ,
+    { value: hour },
+  ] = dateTimeFormat.formatToParts(new Date(dte))
+
+  return `${weekday} ${day}-${month}`
 }
 
 /**
@@ -446,19 +477,21 @@ function createCourseDetails() {
 
   const rows = Object.values(courses).map((index) => {
     // Title
-    const searchForTitle = sortedSessions[index].summary.match(/with(?!.*with)/i)
-    let title = ''
-    if (searchForTitle && searchForTitle.index) {
-      title = sortedSessions[index].summary.slice(0, searchForTitle.index).trim()
-    }
+    const foundWithInTitle = sortedSessions[index].summary.match(/with(?!.*with)/i)
+    const title =
+      foundWithInTitle && foundWithInTitle.index
+        ? sortedSessions[index].summary.slice(0, foundWithInTitle.index).trim()
+        : sortedSessions[index].summary
+
     // Dates
     const startDateTime = new Date(sortedSessions[index].startDateTime)
     const startDate = googleSheetDateTime(startDateTime)
 
     const endDateTime = new Date(sortedSessions[index].endDateTime)
 
-    const prevFridayDate = new Date(getPreviousFridayTimestamp(startDateTime))
-    const closeDate = new Date(prevFridayDate.setDate(prevFridayDate.getDate() - 7))
+    const closeDate = new Date(getPreviousFridayTimestamp(startDateTime))
+    //Used to be 2 weeks prior - code here just incase we revert
+    // const closeDate = new Date(prevFridayDate.setDate(prevFridayDate.getDate() - 7))
 
     // Times
     const displayStartTime = fmtDateTimeLocal(startDateTime, {
@@ -480,6 +513,9 @@ function createCourseDetails() {
           member.memberName.toString().toLowerCase()
       ) || {}
 
+    const ifCostExists = getWordAfter(sortedSessions[index].description, 'Cost:')
+    const cost = ifCostExists != '' ? ifCostExists : 'Nil'
+
     return {
       summary: sortedSessions[index].summary,
       title,
@@ -493,7 +529,7 @@ function createCourseDetails() {
       description: sortedSessions[index].description,
       min: getWordAfter(sortedSessions[index].description, 'Min:'),
       max: getWordAfter(sortedSessions[index].description, 'Max:'),
-      cost: getWordAfter(sortedSessions[index].description, 'Cost:'),
+      cost,
       phone: member.mobile || '',
       email: member.email || '',
       contact: sortedSessions[index].contact || 'No Contact',
@@ -550,15 +586,21 @@ function updateWordpressEnrolmentForm() {
   /**
    * TODO
    * what other text needs to be in the helptext?
+   * update when close date reached or count >= max (IF MAX > 0)
+   *
    *
    */
   allCourses.forEach((thisCourse) => {
+    const courseTitle = thisCourse.title != '' ? thisCourse.title : thisCourse.summary
     const courseDateTime = formatU3ADateTime(new Date(thisCourse.startDate))
-    const courseHelpText = `Session starts: ${courseDateTime}  -  Presented by: ${thisCourse.presenter}`
+    const closeDate = formatU3ADate(new Date(thisCourse.closeDate))
+    var courseHelpText = `Course commences: ${courseDateTime}`
+    courseHelpText +=
+      thisCourse.presenter !== '' ? `  -  Presented by: ${thisCourse.presenter}` : ''
+    courseHelpText += thisCourse.closeDate !== '' ? `\nEnrolments close: ${closeDate}` : ''
     showToast(`Adding Question: ${thisCourse.title}`, 1)
-    const item = googleForm.addCheckboxItem()
-    item.setTitle(thisCourse.title).setChoices([item.createChoice('Enrol?')])
-    item.setHelpText(courseHelpText)
+    const item = googleForm.addCheckboxItem().setTitle(courseTitle).setHelpText(courseHelpText)
+    item.setChoices([item.createChoice('Enrol?')])
   })
 
   //make a new filename with todays date/time
