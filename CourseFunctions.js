@@ -533,6 +533,8 @@ function createCourseDetails() {
       phone: member.mobile || '',
       email: member.email || '',
       contact: sortedSessions[index].contact || 'No Contact',
+      numberCurrentlyEnroled: '0',
+      courseIsNowClosed: 'false',
     }
   })
 
@@ -597,6 +599,7 @@ function updateWordpressEnrolmentForm() {
     var courseHelpText = `Course commences: ${courseDateTime}`
     courseHelpText +=
       thisCourse.presenter !== '' ? `  -  Presented by: ${thisCourse.presenter}` : ''
+    courseHelpText += `\n${thisCourse.location}`
     courseHelpText += thisCourse.closeDate !== '' ? `\nEnrolments close: ${closeDate}` : ''
     showToast(`Adding Question: ${thisCourse.title}`, 1)
     const item = googleForm.addCheckboxItem().setTitle(courseTitle).setHelpText(courseHelpText)
