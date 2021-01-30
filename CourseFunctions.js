@@ -177,11 +177,11 @@ function courseDetailToSheet(course, outputTo) {
   // Calculate 2 friday's prior to course start date.
 
   const prevFridayDate = new Date(getPreviousFridayTimestamp(course.startDate))
-  const twoWeeksAgoFriday = new Date(prevFridayDate.setDate(prevFridayDate.getDate() - 7))
+  // const twoWeeksAgoFriday = new Date(prevFridayDate.setDate(prevFridayDate.getDate() - 7))
 
   cell =
     'Enrolments close - ' +
-    fmtDateTimeLocal(twoWeeksAgoFriday, {
+    fmtDateTimeLocal(prevFridayDate, {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
@@ -597,13 +597,12 @@ function updateWordpressEnrolmentForm() {
     const courseDateTime = formatU3ADateTime(new Date(thisCourse.startDate))
     const closeDate = formatU3ADate(new Date(thisCourse.closeDate))
     var courseHelpText = `Course commences: ${courseDateTime}`
-    courseHelpText +=
-      thisCourse.presenter !== '' ? `  -  Presented by: ${thisCourse.presenter}` : ''
     courseHelpText += `\n${thisCourse.location}`
     courseHelpText += thisCourse.closeDate !== '' ? `\nEnrolments close: ${closeDate}` : ''
-    showToast(`Adding Question: ${thisCourse.title}`, 1)
     const item = googleForm.addCheckboxItem().setTitle(courseTitle).setHelpText(courseHelpText)
-    item.setChoices([item.createChoice('Enrol?')])
+    const choice = item.createChoice('Enrol?')
+    item.setChoices([choice])
+    showToast(`Processed: ${thisCourse.title}`, 1)
   })
 
   //make a new filename with todays date/time
@@ -685,18 +684,19 @@ function enrolResponseToCSV(responseSheet) {
     })
     result.push([name.trim(), email.trim(), ...thisRow])
   })
-
   //Write the data back to the sheet
-  sheet.getRange(sheet.getLastRow() + 1, 1, result.length, result[0].length).setValues(result)
+  if (result) {
+    sheet.getRange(sheet.getLastRow() + 1, 1, result.length, result[0].length).setValues(result)
 
-  //set a formula in the last 2 columns as error checking
-  const formulas = [
-    'ArrayFormula(index(Members,match(TRUE, exact(A2,memberName),0),1))',
-    'ArrayFormula(index(Members,match(TRUE, exact(B2,memberEmail),0),1))',
-  ]
-  sheet.getRange(2, numberOfCourses + 3, 1, 2).setFormulas([formulas])
-  const fillDownRange = sheet.getRange(2, numberOfCourses + 3, sheet.getLastRow() - 1)
-  sheet.getRange(2, numberOfCourses + 3, 1, 2).copyTo(fillDownRange)
+    //set a formula in the last 2 columns as error checking
+    const formulas = [
+      'ArrayFormula(index(Members,match(TRUE, exact(A2,memberName),0),1))',
+      'ArrayFormula(index(Members,match(TRUE, exact(B2,memberEmail),0),1))',
+    ]
+    sheet.getRange(2, numberOfCourses + 3, 1, 2).setFormulas([formulas])
+    const fillDownRange = sheet.getRange(2, numberOfCourses + 3, sheet.getLastRow() - 1)
+    sheet.getRange(2, numberOfCourses + 3, 1, 2).copyTo(fillDownRange)
+  }
 }
 
 /**
