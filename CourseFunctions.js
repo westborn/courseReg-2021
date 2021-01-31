@@ -247,28 +247,13 @@ function selectedRegistrationEmails() {
  * @param {string} templateEmailSubject of an existing DRAFT to use as a template
  *
  */
-function createZoomSessionEmail(templateEmailSubject = 'TEMPLATE - Zoom Session Advice') {
+function createSessionAdviceEmail() {
   // Must select from the CalendarImport sheet and must be in column "A" (1)
   const res = metaSelected('CalendarImport', 1)
   if (!res) {
     return
   }
   const { rowSelected, numRowsSelected } = res
-
-  // option to skip browser prompt if you want to use this code in other projects
-  if (!templateEmailSubject) {
-    templateEmailSubject = Browser.inputBox(
-      'Mail Merge',
-      'Type or copy/paste the subject line of the Gmail ' +
-        'draft message you would like to mail merge with:',
-      Browser.Buttons.OK_CANCEL
-    )
-
-    if (templateEmailSubject === 'cancel' || templateEmailSubject == '') {
-      // if no subject line finish up
-      return
-    }
-  }
 
   //get CalendarImport sheet
   const sessionData = SpreadsheetApp.getActiveSpreadsheet()
@@ -277,7 +262,7 @@ function createZoomSessionEmail(templateEmailSubject = 'TEMPLATE - Zoom Session 
     .getValues()
   const allSessions = getJsonArrayFromData(sessionData)
 
-  //filter to just tne session selected. Note header and zero baseed index means offset -2
+  //filter to just the session selected. Note header and zero baseed index means offset -2
   selectedSessions = allSessions.filter(
     (session_, idx) => idx >= rowSelected - 2 && idx < rowSelected + numRowsSelected - 2
   )
@@ -328,7 +313,12 @@ function createZoomSessionEmail(templateEmailSubject = 'TEMPLATE - Zoom Session 
     const fieldReplacer = {
       courseSummary: thisSession.summary,
       startDateTime: courseDateTime,
+      courseLocation: thisSession.location,
     }
+
+    const templateEmailSubject = thisSession.location.toLowerCase().includes('zoom')
+      ? 'TEMPLATE - Zoom Class Advice'
+      : 'TEMPLATE - U3A Class Advice'
 
     // get the draft Gmail message to use as a template
     const emailTemplate = getGmailTemplateFromDrafts_(templateEmailSubject)

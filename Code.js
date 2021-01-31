@@ -27,7 +27,7 @@ function onOpen() {
       ui
         .createMenu('CalendarImport')
         .addItem('Schedule Zoom Meeting', 'selectedZoomSessions')
-        .addItem('Email Zoom Session Advice', 'createZoomSessionEmail')
+        .addItem('Email Session Advice', 'createSessionAdviceEmail')
         .addItem('Import Calendar', 'loadCalendarSidebar')
         .addItem('Create CourseDetails', 'createCourseDetails')
     )
