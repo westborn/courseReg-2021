@@ -92,9 +92,10 @@ function draftEnrolleeEmail(
           (course) => course.title.toString().toLowerCase() === courseTitle.toString().toLowerCase()
         )
         .map((cR) => {
+          const withPresenter = cR.presenter ? ` with ${cR.presenter}` : ''
           const tmp = `
           <br>
-          <b>${cR.title}</b><font color="#606060"> with ${cR.presenter}</font>
+          <b>${cR.title}</b><font color="#606060">${withPresenter}</font>
           <br>&nbsp;&nbsp;&nbsp;&nbsp;When: ${cR.days} ${cR.dates}
           <br>&nbsp;&nbsp;&nbsp;&nbsp;Time: ${cR.time}
           <br>&nbsp;&nbsp;&nbsp;&nbsp;Where: ${cR.location}
