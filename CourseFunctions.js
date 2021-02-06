@@ -524,7 +524,7 @@ function createCourseDetails() {
       email: member.email || '',
       contact: sortedSessions[index].contact || 'No Contact',
       numberCurrentlyEnroled: '0',
-      courseIsNowClosed: 'false',
+      courseStatus: 'Enrol?',
     }
   })
 
@@ -782,4 +782,50 @@ function buildDB() {
   )
   pivotValue2.setDisplayName('numberAttendees')
   const pivotGroup2 = pivotTable2.addRowGroup(3)
+}
+
+/**
+ * Update Google Form and "CourseDetails" sheet to reflect a new "courseStatus"
+ *
+ */
+function updateCourseStatus(title) {
+  //find the existing Google Form
+  const googleForm = FormApp.openById(U3A.ENROLMENT_GOOGLE_FORM_ID)
+
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('CourseDetails')
+  const courseData = sheet.getDataRange().getValues()
+  const allCourses = getJsonArrayFromData(courseData)
+
+  thisCourse = allCourses.find((course) => course.title === title)
+  const status = thisCourse.courseStatus
+  const courseDateTime = formatU3ADateTime(new Date(thisCourse.startDate))
+  const closeDate = formatU3ADate(new Date(thisCourse.closeDate))
+  var courseHelpText = ''
+  switch (status) {
+    case 'Enrol?':
+      courseHelpText = `Course commences: ${courseDateTime}`
+      courseHelpText += `\n${thisCourse.location}`
+      courseHelpText += thisCourse.closeDate !== '' ? `\nEnrolments close: ${closeDate}` : ''
+      break
+    case 'Waitlist?':
+      courseHelpText = `Course is fully booked - you can wait list and we'll notify you if a vacancy happens`
+      break
+    case 'Closed!':
+      courseHelpText = `Course is now closed - no additional registrations can be accepted`
+      break
+    case 'Cancelled':
+      courseHelpText = `Course has been cancelled - no registrations can be accepted`
+      break
+    default:
+      courseHelpText = `Course is now closed - no additional registrations can be accepted`
+  }
+
+  const formItems = googleForm.getItems(FormApp.ItemType.CHECKBOX)
+  for (const item of formItems) {
+    if (item.getTitle() === title) {
+      const checkboxItem = item.asCheckboxItem()
+      checkboxItem.setHelpText(courseHelpText)
+      checkboxItem.setChoices([checkboxItem.createChoice(status)])
+    }
+  }
 }

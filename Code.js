@@ -24,6 +24,10 @@ function onOpen() {
   var ui = SpreadsheetApp.getUi()
   ui.createMenu('U3A Menu')
     .addSubMenu(
+      ui.createMenu('CourseDetails').addItem('Change Course Status', 'changeCourseStatus')
+    )
+    .addSeparator()
+    .addSubMenu(
       ui
         .createMenu('CalendarImport')
         .addItem('Schedule Zoom Meeting', 'selectedZoomSessions')
@@ -88,4 +92,11 @@ function btn_createDraftZoomEmail() {
 
 function btn_print_courseRegister() {
   print_courseRegister()
+}
+
+function changeCourseStatus() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet()
+  const selectedCourse = sheet.getCurrentCell().getValue()
+  updateCourseStatus(selectedCourse)
+  showToast(`Updated "${selectedCourse}"`, 5)
 }
