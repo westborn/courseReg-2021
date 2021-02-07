@@ -586,13 +586,32 @@ function updateWordpressEnrolmentForm() {
     const courseTitle = thisCourse.title != '' ? thisCourse.title : thisCourse.summary
     const courseDateTime = formatU3ADateTime(new Date(thisCourse.startDate))
     const closeDate = formatU3ADate(new Date(thisCourse.closeDate))
-    var courseHelpText = `Course commences: ${courseDateTime}`
-    courseHelpText += `\n${thisCourse.location}`
-    courseHelpText += thisCourse.closeDate !== '' ? `\nEnrolments close: ${closeDate}` : ''
+    const courseStatus = thisCourse.courseStatus
+
+    var courseHelpText = ''
+    switch (courseStatus) {
+      case 'Enrol?':
+        courseHelpText = `Course commences: ${courseDateTime}`
+        courseHelpText += `\n${thisCourse.location}`
+        courseHelpText += thisCourse.closeDate !== '' ? `\nEnrolments close: ${closeDate}` : ''
+        break
+      case 'Waitlist?':
+        courseHelpText = `Course is fully booked - you can wait list and we'll notify you if a vacancy happens`
+        break
+      case 'Closed!':
+        courseHelpText = `Course is now closed - no additional registrations can be accepted`
+        break
+      case 'Cancelled':
+        courseHelpText = `Course has been cancelled - no registrations can be accepted`
+        break
+      default:
+        courseHelpText = `Course is now closed! - no additional registrations can be accepted`
+    }
+
     const item = googleForm.addCheckboxItem().setTitle(courseTitle).setHelpText(courseHelpText)
-    const choice = item.createChoice('Enrol?')
+    const choice = item.createChoice(courseStatus)
     item.setChoices([choice])
-    showToast(`Processed: ${thisCourse.title}`, 1)
+    showToast(`Processed: ${thisCourse.title} as ${courseStatus}`, 1)
   })
 
   //make a new filename with todays date/time
@@ -788,7 +807,7 @@ function buildDB() {
  * Update Google Form and "CourseDetails" sheet to reflect a new "courseStatus"
  *
  */
-function updateCourseStatus(title) {
+function updateCourseStatus(title, status) {
   //find the existing Google Form
   const googleForm = FormApp.openById(U3A.ENROLMENT_GOOGLE_FORM_ID)
 
@@ -797,7 +816,6 @@ function updateCourseStatus(title) {
   const allCourses = getJsonArrayFromData(courseData)
 
   thisCourse = allCourses.find((course) => course.title === title)
-  const status = thisCourse.courseStatus
   const courseDateTime = formatU3ADateTime(new Date(thisCourse.startDate))
   const closeDate = formatU3ADate(new Date(thisCourse.closeDate))
   var courseHelpText = ''
@@ -817,7 +835,7 @@ function updateCourseStatus(title) {
       courseHelpText = `Course has been cancelled - no registrations can be accepted`
       break
     default:
-      courseHelpText = `Course is now closed - no additional registrations can be accepted`
+      courseHelpText = `Course is now closed! - no additional registrations can be accepted`
   }
 
   const formItems = googleForm.getItems(FormApp.ItemType.CHECKBOX)
@@ -828,4 +846,22 @@ function updateCourseStatus(title) {
       checkboxItem.setChoices([checkboxItem.createChoice(status)])
     }
   }
+
+  const titleRow = getRowFromColumnSearch(courseData, 'title', title)
+  const columnNumber = courseData[0].indexOf('courseStatus')
+  sheet.getRange(titleRow, columnNumber + 1, 1, 1).setValue(status)
+}
+
+/**
+ * get a list of course titles from the CourseDetails sheet
+ *
+ */
+function getCourseList() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('CourseDetails')
+  const courseData = sheet.getDataRange().getValues()
+  const allCourses = getJsonArrayFromData(courseData)
+
+  const courseTitles = allCourses.map((course) => course.title)
+
+  return courseTitles
 }

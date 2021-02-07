@@ -99,7 +99,8 @@ function draftEnrolleeEmail(
           <br>&nbsp;&nbsp;&nbsp;&nbsp;When: ${cR.days} ${cR.dates}
           <br>&nbsp;&nbsp;&nbsp;&nbsp;Time: ${cR.time}
           <br>&nbsp;&nbsp;&nbsp;&nbsp;Where: ${cR.location}
-          <br>&nbsp;&nbsp;&nbsp;&nbsp;Contact: ${cR.contact}<br>
+          <br>&nbsp;&nbsp;&nbsp;&nbsp;Contact: ${cR.contact} - ${cR.phone}
+          <br>
           `
           return tmp
         })

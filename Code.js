@@ -24,7 +24,7 @@ function onOpen() {
   var ui = SpreadsheetApp.getUi()
   ui.createMenu('U3A Menu')
     .addSubMenu(
-      ui.createMenu('CourseDetails').addItem('Change Course Status', 'changeCourseStatus')
+      ui.createMenu('CourseDetails').addItem('Change Course Status', 'loadCourseStatusSidebar')
     )
     .addSeparator()
     .addSubMenu(
@@ -78,6 +78,14 @@ function loadHelpSidebar() {
   SpreadsheetApp.getUi().showSidebar(html)
 }
 
+/**
+ * Handler  to load Help Sidebar.
+ */
+function loadCourseStatusSidebar() {
+  var html = HtmlService.createHtmlOutputFromFile('courseStatusSidebar').setTitle('U3A Tools')
+  SpreadsheetApp.getUi().showSidebar(html)
+}
+
 function btn_makeHyperlink() {
   makeHyperlink()
 }
@@ -94,9 +102,8 @@ function btn_print_courseRegister() {
   print_courseRegister()
 }
 
-function changeCourseStatus() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet()
-  const selectedCourse = sheet.getCurrentCell().getValue()
-  updateCourseStatus(selectedCourse)
-  showToast(`Updated "${selectedCourse}"`, 5)
+function changeCourseStatus({ courseTitle, status }) {
+  console.log('changeCourseStatus', courseTitle, status)
+  updateCourseStatus(courseTitle, status)
+  showToast(`Updated "${courseTitle}" to ${status}`, 5)
 }

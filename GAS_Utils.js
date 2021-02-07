@@ -16,6 +16,24 @@ function getFormDestinationSheet(form) {
   }
 }
 
+/**
+ * Searches sheet data for text in a column and returns row number
+ * @param {*} data spreadsheet.getvalues() result
+ * @param {*} columnName named of the column to search
+ * @param {*} searchText text to search for
+ * @returns {Number} row number or null
+ *
+ */
+function getRowFromColumnSearch(data, columnName, searchText) {
+  const columnNumber = data[0].indexOf(columnName)
+  for (var i = 0; i < data.length; i++) {
+    if (data[i][columnNumber] === searchText) {
+      return i + 1
+    }
+  }
+  return null
+}
+
 // https://developers.google.com/drive/api/v2/ref-search-terms
 function findFilesInFolder(folderID, searchExpression) {
   const files = folderID.searchFiles(searchExpression)
