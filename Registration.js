@@ -2,8 +2,8 @@
  * simple loop to call "createAttendanceRegister" for selected courses
  */
 function selectedAttendanceRegister() {
-  // Must select from the CourseDetails sheet and must be in column "A" (1)
-  const res = metaSelected('CourseDetails', 1)
+  // Must select  from the CourseDetails sheet
+  const res = metaSelected(1, 'CourseDetails')
   if (!res) {
     return
   }

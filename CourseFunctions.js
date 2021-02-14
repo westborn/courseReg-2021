@@ -200,30 +200,11 @@ function courseDetailToSheet(course, outputTo) {
 }
 
 /**
- * simple loop to call "print_courseRegister" for every row in the database
- */
-function allRegistrationEmails() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet()
-  const pdfSheet = ss.getSheetByName('Course Registration')
-  const dbSheet = ss.getSheetByName('Database')
-  let attendees = dbSheet.getRange('E13:E').getDisplayValues()
-  const lastAttendeeIndex = attendees.filter(String).length
-  // drop the last item - it is the Grand Total
-  attendees.length = lastAttendeeIndex - 1
-
-  attendees.forEach((attendee) => {
-    //push the first name into the PDF sheet
-    pdfSheet.getRange('K1').setValue(attendee[0])
-    print_courseRegister()
-  })
-}
-
-/**
  * simple loop to call "print_courseRegister" for selected rows in the database
  */
 function selectedRegistrationEmails() {
-  // Must select from the Database sheet and must be in column "E" (5)
-  const res = metaSelected('Database', 5)
+  // Selection must be memberName(s)
+  const res = metaSelected(1)
   if (!res) {
     return
   }
@@ -244,12 +225,10 @@ function selectedRegistrationEmails() {
  * NOTE: This is used a few days prior to a session to send a link
  *       to all the enrolled participants
  *
- * @param {string} templateEmailSubject of an existing DRAFT to use as a template
- *
  */
 function createSessionAdviceEmail() {
-  // Must select from the CalendarImport sheet and must be in column "A" (1)
-  const res = metaSelected('CalendarImport', 1)
+  // Must select Summary(column1) and just one column
+  const res = metaSelected(1, 'CalendarImport')
   if (!res) {
     return
   }
@@ -262,7 +241,7 @@ function createSessionAdviceEmail() {
     .getValues()
   const allSessions = getJsonArrayFromData(sessionData)
 
-  //filter to just the session selected. Note header and zero baseed index means offset -2
+  //filter to just the session selected. Note header and zero based index means offset -2
   selectedSessions = allSessions.filter(
     (session_, idx) => idx >= rowSelected - 2 && idx < rowSelected + numRowsSelected - 2
   )

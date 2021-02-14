@@ -286,10 +286,10 @@ function expBackOff(func, optLoggerFunction) {
 }
 
 /**
- * returns details about the selected cell/range in the currenty active sheet.
+ * returns details about the selected cell/range in a sheet or the currenty active sheet.
  *
- * @param {String} inSheet default 'Sheet1' - the sheet that must be active
- * @param {number} oneColOnly default 0 - number of the column if selection should only be in one column - else 0
+ * @param {number} oneColOnly default 0 - 1 if selection should only be in one column
+ * @param {String} inSheet  or use the active sheet
  * @returns {object} data various elements from the selected range
  * @returns {object} data.sheetSelected - {Sheet object} of the selected sheet
  * @returns {string} data.colSelected
@@ -300,19 +300,19 @@ function expBackOff(func, optLoggerFunction) {
  * @returns {string} data.activeCellValue - string, number, date etc
  *
  */
-function metaSelected(inSheet = 'Sheet1', oneColOnly = 0) {
+function metaSelected(oneColOnly = 0, inSheet) {
   const sheetSelected = SpreadsheetApp.getActive().getActiveSheet()
   const activeRange = SpreadsheetApp.getActive().getActiveRange()
   const firstColSelected = activeRange.getColumn()
   const lastColSelected = activeRange.getLastColumn()
 
-  if (sheetSelected.getSheetName() != inSheet) {
-    showToast('You need to select a title on the "' + inSheet + '" sheet', 20)
-    return undefined
+  if (inSheet && sheetSelected.getSheetName() != inSheet) {
+    showToast('You need to select cells on the "' + inSheet + '" sheet', 20)
+    return null
   }
-  if (oneColOnly && (firstColSelected != lastColSelected || firstColSelected != oneColOnly)) {
-    showToast('You need to select ONE column only', 20)
-    return undefined
+  if (oneColOnly && firstColSelected != lastColSelected) {
+    showToast('You need to select in ONE column only', 20)
+    return null
   }
 
   return {

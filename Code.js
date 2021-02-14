@@ -36,10 +36,11 @@ function onOpen() {
         .addItem('Create CourseDetails', 'createCourseDetails')
     )
     .addSeparator()
+    .addItem('Email Registration Info to SELECTED Members', 'selectedHTMLRegistrationEmails')
+    .addSeparator()
     .addSubMenu(
       ui
         .createMenu('Database')
-        .addItem('Email ALL Enrollees - PDF', 'allRegistrationEmails')
         .addItem('Email ALL Enrollees - HTML', 'allHTMLRegistrationEmails')
         .addItem('Email SELECTED Enrollees - PDF', 'selectedRegistrationEmails')
         .addItem('Email SELECTED Enrollees - HTML', 'selectedHTMLRegistrationEmails')

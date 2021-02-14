@@ -1,27 +1,9 @@
 /**
- * simple loop to call "draftEnrolleeEmail" for every row in the database
- */
-function allHTMLRegistrationEmails() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet()
-  const dbSheet = ss.getSheetByName('Database')
-  let attendees = dbSheet.getRange('E13:E').getDisplayValues()
-  const lastAttendeeIndex = attendees.filter(String).length
-  // drop the last item - it is the Grand Total
-  attendees.length = lastAttendeeIndex - 1
-  attendees.forEach((attendee) => {
-    draftEnrolleeEmail('TEMPLATE - Course Registration Information', {
-      memberName: attendee[0],
-      subject: 'U3A Bermagui - Course Registration Information',
-    })
-  })
-}
-
-/**
  * simple loop to call "draftEnrolleeEmail" for selected rows in the database
  */
 function selectedHTMLRegistrationEmails() {
-  // Must select from the Database sheet and must be in column "E" (5)
-  const res = metaSelected('Database', 5)
+  // Must select memberName(s) in one column
+  const res = metaSelected(1)
   if (!res) {
     return
   }
@@ -84,6 +66,10 @@ function draftEnrolleeEmail(
     )
     .map((entry) => entry.goingTo)
 
+  //Don't send email if member is not attending any courses
+  if (memberIsGoingTo.length == 0) {
+    return
+  }
   // get the courseDetails rows for all the courses the member is attending
   const classInfo = memberIsGoingTo
     .map((courseTitle) =>
