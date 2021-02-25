@@ -81,9 +81,7 @@ function downloadCalendarEvents({ term = 3, calendarId = 'u3acomputerclub@hotmai
       )
       .join(', ')
     const dedupDays = Array.from(new Set(dedupDates.map((el) => new Date(el).getDay()))).sort()
-    course.daysScheduled = dedupDays
-      .map((el) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][el])
-      .join(', ')
+    course.daysScheduled = dedupDays.map((el) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][el]).join(', ')
     return course
   })
 
@@ -94,9 +92,7 @@ function downloadCalendarEvents({ term = 3, calendarId = 'u3acomputerclub@hotmai
   const tr = rows.map((row) => heads.map((key) => row[String(key)] || ''))
 
   // write result
-  calendarImportSheet
-    .getRange(calendarImportSheet.getLastRow() + 1, 1, tr.length, tr[0].length)
-    .setValues(tr)
+  calendarImportSheet.getRange(calendarImportSheet.getLastRow() + 1, 1, tr.length, tr[0].length).setValues(tr)
 
   return
 }
@@ -134,13 +130,13 @@ const decodePresenter = (summary) => {
 /**
  * Extract course events (dates, location, summary, description) as an array of objects
  * @param {id} calendarId of the calendar to be extracted
- * @param {object} eventRequest containing parametres for the calendar search (type of search, start date/time)
+ * @param {object} eventRequest containing parameters for the calendar search (type of search, start date/time)
  * @returns {object} courseEvent
  */
 function retrieveCalendarEvents(calendarId, eventRequest) {
   const unpackEvent = (type, event) => {
     const courseEvent = {
-      summary: event.summary || '',
+      summary: event.summary.trim() || '',
       description: event.description ? stripHTML(event.description) : '',
       location: event.location || '',
       startDateTime: googleSheetDateTime(event.start.dateTime),

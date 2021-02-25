@@ -13,9 +13,7 @@ function makeHyperlink() {
   //  Logger.log(noDups.length)
   sheet.getRange('C5:C6').clearContent()
 
-  var hyperValOutlook = `=HYPERLINK("mailto:noreply@gmail.com?bcc=${noDups.join(
-    ';'
-  )}","Outlook Link")`
+  var hyperValOutlook = `=HYPERLINK("mailto:noreply@gmail.com?bcc=${noDups.join(';')}","Outlook Link")`
   var hyperValMac = `=HYPERLINK("mailto:noreply@gmail.com?bcc=${noDups.join(',')}","MacMail Link")`
 
   sheet.getRange('C5').setValue(hyperValOutlook)
@@ -38,10 +36,7 @@ function print_attendance() {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
   var myNamedRanges = listNamedRangesA1(spreadsheet)
   if (myNamedRanges[rangeNameToPrint] === 'undefined') {
-    showToast(
-      "No print area found. Please define one 'print_area_????' named range using Data > Named ranges.",
-      30
-    )
+    showToast("No print area found. Please define one 'print_area_????' named range using Data > Named ranges.", 30)
     return
   }
   var selectedRange = spreadsheet.getRangeByName(myNamedRanges[rangeNameToPrint])
@@ -77,10 +72,7 @@ function print_courseRegister() {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
   var myNamedRanges = listNamedRangesA1(spreadsheet)
   if (myNamedRanges[rangeNameToPrint] === 'undefined') {
-    showToast(
-      "No print area found. Please define one 'print_area_????' named range using Data > Named ranges.",
-      30
-    )
+    showToast("No print area found. Please define one 'print_area_????' named range using Data > Named ranges.", 30)
     return
   }
   var selectedRange = spreadsheet.getRangeByName(myNamedRanges[rangeNameToPrint])
@@ -112,10 +104,7 @@ function print_courseRegister() {
  */
 function makeCourseDetailForWordPress() {
   //get courseDetail sheet
-  const courseData = SpreadsheetApp.getActiveSpreadsheet()
-    .getSheetByName('CourseDetails')
-    .getDataRange()
-    .getValues()
+  const courseData = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('CourseDetails').getDataRange().getValues()
   const allCourses = getJsonArrayFromData(courseData)
 
   var ssDest = SpreadsheetApp.openById(U3A.WORDPRESS_PROGRAM_FILE_ID)
@@ -135,12 +124,11 @@ function makeCourseDetailForWordPress() {
 }
 
 /**
- * Create a formatted row from the CourseDetals sheet
+ * Create a formatted row from the CourseDetails sheet
  * @param {object} course row from CourseDetails
  * @param {range} outputTo range to write to on the sheet
  *
  * currently uses ordinal positions of the columns
- * TODO - make "latest close date"
  */
 function courseDetailToSheet(course, outputTo) {
   var bold = SpreadsheetApp.newTextStyle().setBold(true).build()
@@ -194,9 +182,7 @@ function courseDetailToSheet(course, outputTo) {
     .setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP)
     .setVerticalAlignment('middle')
 
-  outputTo
-    .offset(0, 0, 1, 3)
-    .setBorder(true, null, null, null, null, null, 'black', SpreadsheetApp.BorderStyle.SOLID)
+  outputTo.offset(0, 0, 1, 3).setBorder(true, null, null, null, null, null, 'black', SpreadsheetApp.BorderStyle.SOLID)
 }
 
 /**
@@ -235,10 +221,7 @@ function createSessionAdviceEmail() {
   const { rowSelected, numRowsSelected } = res
 
   //get CalendarImport sheet
-  const sessionData = SpreadsheetApp.getActiveSpreadsheet()
-    .getSheetByName('CalendarImport')
-    .getDataRange()
-    .getValues()
+  const sessionData = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('CalendarImport').getDataRange().getValues()
   const allSessions = getJsonArrayFromData(sessionData)
 
   //filter to just the session selected. Note header and zero based index means offset -2
@@ -248,16 +231,10 @@ function createSessionAdviceEmail() {
   // selectedSessions.map((el) => console.log(el.summary, el.id))
 
   //get courseDetail sheet
-  const courseData = SpreadsheetApp.getActiveSpreadsheet()
-    .getSheetByName('CourseDetails')
-    .getDataRange()
-    .getValues()
+  const courseData = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('CourseDetails').getDataRange().getValues()
   const allCourses = getJsonArrayFromData(courseData)
   //get memberDetail sheet
-  const memberData = SpreadsheetApp.getActiveSpreadsheet()
-    .getSheetByName('MemberDetails')
-    .getDataRange()
-    .getValues()
+  const memberData = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('MemberDetails').getDataRange().getValues()
   const allMembers = getJsonArrayFromData(memberData)
   //get the Database of who is attending which course (columns B:C)
   const db = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Database')
@@ -268,23 +245,17 @@ function createSessionAdviceEmail() {
     const courseDateTime = formatU3ADateTime(new Date(thisSession.startDateTime))
 
     const thisCourse = allCourses.find(
-      (course) =>
-        course.summary.toString().toLowerCase() === thisSession.summary.toString().toLowerCase()
+      (course) => course.summary.toString().toLowerCase() === thisSession.summary.toString().toLowerCase()
     )
     const recipient = thisCourse.email
     const subject = 'U3A: ' + thisSession.summary + '  -  ' + courseDateTime
 
     const membersGoing = allDB
-      .filter(
-        (dbEntry) =>
-          dbEntry.goingTo.toString().toLowerCase() === thisCourse.title.toString().toLowerCase()
-      )
+      .filter((dbEntry) => dbEntry.goingTo.toString().toLowerCase() === thisCourse.title.toString().toLowerCase())
       .map((entry) => entry.memberName)
     const memberEmails = membersGoing.map(
       (name) =>
-        allMembers.find(
-          (member) => name.toString().toLowerCase() === member.memberName.toString().toLowerCase()
-        ).email
+        allMembers.find((member) => name.toString().toLowerCase() === member.memberName.toString().toLowerCase()).email
     )
     //flatten array and remove dups and drop empty strings
     const bccEmails = [...new Set(memberEmails.flat())].filter(String).join(',')
@@ -404,10 +375,7 @@ function createCourseDetails() {
   }
 
   //get memberDetail sheet
-  const memberData = SpreadsheetApp.getActiveSpreadsheet()
-    .getSheetByName('MemberDetails')
-    .getDataRange()
-    .getValues()
+  const memberData = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('MemberDetails').getDataRange().getValues()
   const allMembers = getJsonArrayFromData(memberData)
 
   //get CalendarImport sheet and sort it by summary and startDate
@@ -478,8 +446,7 @@ function createCourseDetails() {
     const member =
       allMembers.find(
         (member) =>
-          sortedSessions[index].contact.toString().toLowerCase() ===
-          member.memberName.toString().toLowerCase()
+          sortedSessions[index].contact.toString().toLowerCase() === member.memberName.toString().toLowerCase()
       ) || {}
 
     const ifCostExists = getWordAfter(sortedSessions[index].description, 'Cost:')
@@ -513,9 +480,7 @@ function createCourseDetails() {
   const tr = rows.map((row) => heads.map((key) => row[String(key)] || ''))
 
   // write result
-  courseDetailsSheet
-    .getRange(courseDetailsSheet.getLastRow() + 1, 1, tr.length, tr[0].length)
-    .setValues(tr)
+  courseDetailsSheet.getRange(courseDetailsSheet.getLastRow() + 1, 1, tr.length, tr[0].length).setValues(tr)
 
   return
 }
@@ -547,10 +512,7 @@ function updateWordpressEnrolmentForm() {
   })
 
   //get courseDetail sheet
-  const courseData = SpreadsheetApp.getActiveSpreadsheet()
-    .getSheetByName('CourseDetails')
-    .getDataRange()
-    .getValues()
+  const courseData = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('CourseDetails').getDataRange().getValues()
   const allCourses = getJsonArrayFromData(courseData)
 
   // add each course to the form
@@ -766,18 +728,12 @@ function buildDB() {
   const sourceData = dbSheet.getRange(sourceRange)
 
   const pivotTable1 = dbSheet.getRange('E12').createPivotTable(sourceData)
-  const pivotValue1 = pivotTable1.addPivotValue(
-    2,
-    SpreadsheetApp.PivotTableSummarizeFunction.COUNTA
-  )
+  const pivotValue1 = pivotTable1.addPivotValue(2, SpreadsheetApp.PivotTableSummarizeFunction.COUNTA)
   pivotValue1.setDisplayName('numberCourses')
   const pivotGroup1 = pivotTable1.addRowGroup(2)
 
   const pivotTable2 = dbSheet.getRange('H12').createPivotTable(sourceData)
-  const pivotValue2 = pivotTable2.addPivotValue(
-    3,
-    SpreadsheetApp.PivotTableSummarizeFunction.COUNTA
-  )
+  const pivotValue2 = pivotTable2.addPivotValue(3, SpreadsheetApp.PivotTableSummarizeFunction.COUNTA)
   pivotValue2.setDisplayName('numberAttendees')
   const pivotGroup2 = pivotTable2.addRowGroup(3)
 }
