@@ -264,6 +264,7 @@ function createSessionAdviceEmail() {
       courseSummary: thisSession.summary,
       startDateTime: courseDateTime,
       courseLocation: thisSession.location,
+      contact: recipient,
     }
 
     const templateEmailSubject = thisSession.location.toLowerCase().includes('zoom')
